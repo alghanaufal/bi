@@ -1,20 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { ResponsiveBar } from "@nivo/bar";
 import Papa from "papaparse";
-import * as d3 from "d3"; // Import D3 for binning
 
-export default function ImmunizationCoverageHistogram() {
+export default function ImmunizationCoverageBarChart() {
   const [rawData, setRawData] = useState([]);
+  const [yearOptions, setYearOptions] = useState([]);
   const [selectedYear, setSelectedYear] = useState("");
-  const [availableYears, setAvailableYears] = useState([]);
+  const [selectedRegionType, setSelectedRegionType] = useState("Semua"); // Filter for region type
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -44,32 +36,35 @@ export default function ImmunizationCoverageHistogram() {
               return;
             }
 
-            const cleaned = data
+            const formatted = data
               .map((row) => ({
-                nama_kabupaten_kota: row.nama_kabupaten_kota?.trim(),
-                jenis_kelamin: row.jenis_kelamin?.trim(),
-                jumlah_bayi: parseInt(row.jumlah_bayi), // Convert to integer
                 tahun: row.tahun?.trim(),
+                daerah: row.nama_kabupaten_kota?.trim(),
+                jumlah_bayi: parseInt(row.jumlah_bayi), // Convert to integer
+                jenis_kelamin: row.jenis_kelamin?.trim(), // Keep jenis_kelamin for aggregation
+                // Deteksi tipe daerah: "Kota" jika nama mengandung "kota", selain itu "Kabupaten"
+                tipe: row.nama_kabupaten_kota?.toLowerCase().includes("kota")
+                  ? "Kota"
+                  : "Kabupaten",
                 provinsi: row.nama_provinsi?.trim(),
               }))
               .filter(
                 (r) =>
-                  r.provinsi === "JAWA BARAT" &&
+                  r.provinsi === "JAWA BARAT" && // Filter hanya untuk Jawa Barat
+                  r.tahun &&
+                  r.daerah &&
                   !isNaN(r.jumlah_bayi) &&
-                  r.jumlah_bayi >= 0 && // Ensure non-negative numbers for binning
-                  r.nama_kabupaten_kota &&
-                  r.tahun
+                  r.jumlah_bayi >= 0 // Pastikan jumlah bayi valid
               );
 
-            const uniqueYears = [...new Set(cleaned.map((r) => r.tahun))].sort(
-              (a, b) => b - a
-            );
-
-            setRawData(cleaned);
-            setAvailableYears(uniqueYears);
+            const uniqueYears = [
+              ...new Set(formatted.map((r) => r.tahun)),
+            ].sort();
+            setYearOptions(uniqueYears);
             if (uniqueYears.length > 0) {
-              setSelectedYear(uniqueYears[0]); // Set latest year as default
+              setSelectedYear(uniqueYears[uniqueYears.length - 1]); // Default to latest year
             }
+            setRawData(formatted); // Set rawData, not directly display data
             setIsLoading(false);
           },
           error: (err) => {
@@ -88,86 +83,43 @@ export default function ImmunizationCoverageHistogram() {
       });
   }, []);
 
-  // Prepare data for Recharts BarChart to act as a Histogram
-  const histogramData = useMemo(() => {
+  // Filter and process data for display based on year and region type
+  const displayData = useMemo(() => {
     if (!rawData.length || !selectedYear) {
       return [];
     }
 
-    // Filter by selected year
-    const filteredByYear = rawData.filter((d) => d.tahun === selectedYear);
+    const filteredByYear = rawData.filter((r) => r.tahun === selectedYear);
 
-    // Aggregate jumlah_bayi per kabupaten/kota for the selected year
-    const aggregatedByKota = filteredByYear.reduce((acc, curr) => {
-      const kotaKey = curr.nama_kabupaten_kota;
-      if (!acc[kotaKey]) {
-        acc[kotaKey] = 0;
+    // Aggregate jumlah_bayi by 'daerah' for the selected year (summing up male/female)
+    const aggregatedByDaerah = filteredByYear.reduce((acc, curr) => {
+      const key = curr.daerah;
+      if (!acc[key]) {
+        acc[key] = {
+          daerah: curr.daerah,
+          total_imunisasi: 0,
+          tipe: curr.tipe, // Preserve region type
+        };
       }
-      acc[kotaKey] += curr.jumlah_bayi; // Summing up male and female counts
+      acc[key].total_imunisasi += curr.jumlah_bayi;
       return acc;
     }, {});
 
-    // Get all aggregated values for binning
-    const values = Object.values(aggregatedByKota);
+    // Convert aggregated object back to an array
+    let processedForDisplay = Object.values(aggregatedByDaerah);
 
-    if (values.length === 0) {
-      return []; // No data to bin
-    }
-
-    // Define the binning function using D3
-    // Use d3.extent to find min and max values for the domain
-    const [minVal, maxVal] = d3.extent(values);
-
-    // Create a bin generator. You can adjust `thresholds` for more/fewer bins.
-    const binGenerator = d3
-      .bin()
-      .domain([minVal, maxVal + (maxVal === minVal ? 1 : 0)]) // Ensure domain has width even if all values are same
-      .thresholds(10); // Generate 10 bins (adjust this number as needed)
-
-    // Apply the binning to your values
-    const bins = binGenerator(values);
-
-    // Format bins for Recharts BarChart
-    // Each bin becomes an object with a 'range' for X-axis and 'count' for Y-axis
-    const formattedBins = bins
-      .map((bin) => ({
-        // Example: range "1000 - 2000"
-        range: `${Math.floor(bin.x0)} - ${Math.floor(bin.x1)}`,
-        count: bin.length, // Number of cities in this bin
-        x0: bin.x0, // For custom tooltip sorting/display
-        x1: bin.x1, // For custom tooltip sorting/display
-      }))
-      .filter((b) => b.count > 0); // Only include bins that actually contain data
-
-    // Sort bins by their lower bound (x0) to ensure correct order on the histogram
-    formattedBins.sort((a, b) => a.x0 - b.x0);
-
-    return formattedBins;
-  }, [rawData, selectedYear]);
-
-  // Custom Tooltip for Recharts Histogram
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div
-          style={{
-            background: "white",
-            padding: 12,
-            border: "1px solid #ccc",
-            borderRadius: 4,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-          }}
-          className="font-inter text-sm"
-        >
-          Jumlah Bayi Imunisasi: <strong>{data.range} orang</strong>
-          <br />
-          Jumlah Kabupaten/Kota: <strong>{data.count}</strong>
-        </div>
+    // Further filter by region type (Kota/Kabupaten)
+    if (selectedRegionType !== "Semua") {
+      processedForDisplay = processedForDisplay.filter(
+        (r) => r.tipe === selectedRegionType
       );
     }
-    return null;
-  };
+
+    // Sort data from highest imunisasi count to lowest
+    processedForDisplay.sort((a, b) => b.total_imunisasi - a.total_imunisasi);
+
+    return processedForDisplay;
+  }, [rawData, selectedYear, selectedRegionType]);
 
   // Loading, Error, and No Data states
   if (isLoading) {
@@ -204,86 +156,120 @@ export default function ImmunizationCoverageHistogram() {
             </h2>
             <p className="text-md text-gray-600">
               Menganalisis distribusi jumlah bayi yang mendapatkan imunisasi
-              dasar lengkap di kabupaten/kota Jawa Barat.
+              dasar lengkap per kabupaten/kota Jawa Barat.
             </p>
+            {/* Filter buttons for region type */}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                className={`px-4 py-2 rounded-md transition-colors duration-200 ${
+                  selectedRegionType === "Semua"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+                onClick={() => setSelectedRegionType("Semua")}
+              >
+                Semua Tipe
+              </button>
+              <button
+                className={`px-4 py-2 rounded-md transition-colors duration-200 ${
+                  selectedRegionType === "Kota"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+                onClick={() => setSelectedRegionType("Kota")}
+              >
+                Kota
+              </button>
+              <button
+                className={`px-4 py-2 rounded-md transition-colors duration-200 ${
+                  selectedRegionType === "Kabupaten"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+                onClick={() => setSelectedRegionType("Kabupaten")}
+              >
+                Kabupaten
+              </button>
+            </div>
           </div>
-          <div className="relative inline-block text-left w-full sm:w-auto">
-            <label
-              htmlFor="year-select"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Pilih Tahun:
-            </label>
-            <select
-              id="year-select"
-              className="border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-700 hover:border-gray-400 transition duration-150 ease-in-out w-full sm:w-auto"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-            >
-              {availableYears.length > 0 ? (
-                availableYears.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))
-              ) : (
-                <option value="">Tidak ada tahun tersedia</option>
-              )}
-            </select>
-          </div>
+          <select
+            className="border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-gray-700 hover:border-gray-400 transition duration-150 ease-in-out w-full sm:w-auto"
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+          >
+            {yearOptions.length > 0 ? (
+              yearOptions.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))
+            ) : (
+              <option value="">Tidak ada tahun tersedia</option>
+            )}
+          </select>
         </div>
 
-        <div style={{ height: 500 }} className="w-full">
-          {histogramData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={histogramData}
-                margin={{
-                  top: 20,
-                  right: 30,
-                  left: 20,
-                  bottom: 50,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="range"
-                  angle={-45} // Rotate labels
-                  textAnchor="end" // Align rotated labels
-                  interval={0} // Show all labels
-                  height={80} // Give more space for rotated labels
-                  tick={{ fontSize: 12, fill: "#666" }}
-                  label={{
-                    value: "Jumlah Bayi Imunisasi (orang)",
-                    position: "insideBottom",
-                    offset: -10,
-                    fill: "#333",
-                    fontSize: 14,
+        <div style={{ height: 600 }}>
+          {" "}
+          {/* Increased height for better bar readability */}
+          {displayData.length > 0 ? (
+            <ResponsiveBar
+              data={displayData}
+              keys={["total_imunisasi"]} // Key for the value (jumlah_bayi)
+              indexBy="daerah" // X-axis will be daerah (kabupaten/kota)
+              layout="vertical" // Standard vertical bar chart
+              margin={{ top: 20, right: 30, bottom: 120, left: 80 }} // Adjusted bottom margin for rotated labels
+              padding={0.2}
+              valueScale={{ type: "linear" }}
+              indexScale={{ type: "band", round: true }}
+              colors={{ scheme: "nivo" }} // Using a default Nivo color scheme
+              borderColor={{ from: "color", modifiers: [["darker", 1.6]] }}
+              axisTop={null}
+              axisRight={null}
+              axisBottom={{
+                tickSize: 5,
+                tickPadding: 5,
+                tickRotation: -45, // Rotate labels for better readability
+                legend: "Kabupaten/Kota",
+                legendPosition: "middle",
+                legendOffset: 100, // Adjust offset for rotated labels
+                truncateTickAt: 0,
+              }}
+              axisLeft={{
+                tickSize: 5,
+                tickPadding: 5,
+                tickRotation: 0,
+                legend: "Jumlah Bayi Imunisasi (Orang)", // Y-axis label
+                legendPosition: "middle",
+                legendOffset: -60,
+                truncateTickAt: 0,
+              }}
+              labelSkipWidth={12}
+              labelSkipHeight={12}
+              labelTextColor={{ from: "color", modifiers: [["darker", 1.6]] }}
+              tooltip={({ id, value, indexValue, data }) => (
+                <div
+                  style={{
+                    padding: 8,
+                    background: "#fff",
+                    border: "1px solid #ccc",
                   }}
-                />
-                <YAxis
-                  allowDecimals={false} // Count should be integer
-                  tick={{ fontSize: 12, fill: "#666" }}
-                  label={{
-                    value: "Jumlah Kabupaten/Kota",
-                    angle: -90,
-                    position: "insideLeft",
-                    offset: 10,
-                    fill: "#333",
-                    fontSize: 14,
-                  }}
-                />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{ fill: "transparent" }}
-                />
-                <Bar dataKey="count" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
+                  className="font-inter text-sm"
+                >
+                  <strong>{indexValue}</strong> ({data.tipe})
+                  <br />
+                  Jumlah Imunisasi: <strong>{value} orang</strong>
+                </div>
+              )}
+            />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
-              Tidak ada data imunisasi bayi yang tersedia untuk tahun{" "}
-              {selectedYear}.
+              Tidak ada data imunisasi bayi untuk ditampilkan di tahun{" "}
+              {selectedYear}
+              {selectedRegionType !== "Semua"
+                ? ` untuk tipe daerah ${selectedRegionType}`
+                : ""}
+              .
             </div>
           )}
         </div>
