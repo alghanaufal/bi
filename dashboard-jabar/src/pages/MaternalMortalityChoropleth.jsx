@@ -201,6 +201,8 @@ export default function MaternalMortalityD3Map() {
 
   // Effect for D3 drawing when data or selectedYear changes
   useEffect(() => {
+    const fixedWidth = 1600;
+    const fixedHeight = 1000;
     if (!geoJsonData || !rawData.length || !selectedYear || !svgRef.current) {
       console.log("Skipping D3 draw: Data not ready.", {
         geoJsonDataLoaded: !!geoJsonData,
@@ -214,8 +216,8 @@ export default function MaternalMortalityD3Map() {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove(); // Clear previous map elements
 
-    const width = svg.node().getBoundingClientRect().width;
-    const height = svg.node().getBoundingClientRect().height;
+    const width = fixedWidth;
+    const height = fixedHeight;
 
     const filteredByYear = rawData.filter((d) => d.tahun === selectedYear);
 
@@ -269,7 +271,6 @@ export default function MaternalMortalityD3Map() {
       .attr("stroke", "#fff")
       .attr("stroke-width", 0.5)
       .on("mouseover", function (event, d) {
-        // Use KABKOT property for tooltip
         const kotaNameFromGeoJson = d.properties?.KABKOT?.trim().toUpperCase();
         const value = aggregatedData[kotaNameFromGeoJson];
         const displayValue = value !== undefined ? value : "Tidak Tersedia";
@@ -391,9 +392,12 @@ export default function MaternalMortalityD3Map() {
   }
 
   return (
-    <section className="pt-6 pb-8 px-4 font-inter bg-gray-50 min-h-screen">
-      <div className="container mx-auto bg-white p-6 rounded-lg shadow-xl border border-gray-200">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    // Outer section: Make it take full viewport height and be a flex container
+    <section className="pt-6 pb-8 px-4 font-inter bg-gray-50 h-screen flex flex-col">
+      {/* Inner container: Make it flex-grow to fill remaining space, and scrollable if content overflows */}
+      <div className="container mx-auto bg-white p-6 rounded-lg shadow-xl border border-gray-200 flex flex-col flex-grow overflow-y-auto">
+        {/* Header section - will take up its natural height */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 flex-shrink-0">
           <div>
             <h2 className="text-3xl font-bold text-gray-800 mb-1">
               Pemetaan Angka Kematian Ibu di Jawa Barat
@@ -402,7 +406,7 @@ export default function MaternalMortalityD3Map() {
               Distribusi jumlah kematian ibu di kabupaten/kota Jawa Barat.
             </p>
           </div>
-          <div className="relative inline-block text-left w-full sm:w-auto">
+          <div className="relative inline-block text-left w-full sm:w-auto flex-shrink-0">
             <label
               htmlFor="year-select"
               className="block text-sm font-medium text-gray-700 mb-1"
@@ -428,11 +432,17 @@ export default function MaternalMortalityD3Map() {
           </div>
         </div>
 
+        {/* Map Container: This will now flex-grow to fill available space */}
         <div
-          className="relative w-full rounded-lg overflow-hidden border border-gray-300 shadow-md"
-          style={{ height: "600px" }}
+          className="relative rounded-lg overflow-hidden border border-gray-300 shadow-md mx-auto"
+          style={{ width: "1600px", height: "1000px" }} // <--- Ukuran ditetapkan di sini
         >
-          <svg ref={svgRef} className="w-full h-full"></svg>
+          {/* SVG will take w-full and h-full of its fixed-size parent */}
+          <svg
+            ref={svgRef}
+            className="w-full h-full"
+            style={{ width: "1600px", height: "1000px" }}
+          ></svg>
           {/* Tooltip element, controlled by D3 */}
           <div
             ref={tooltipRef}
