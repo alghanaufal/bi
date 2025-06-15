@@ -6,6 +6,7 @@ import InfantMortalityTrend from "./pages/InfantMortalityTrend";
 import HealthFacilityComposition from "./pages/HealthFacilityComposition";
 import HealthCorrelation from "./pages/HealthCorrelation";
 import MaternalMortalityChoropleth from "./pages/MaternalMortalityChoropleth";
+import ImmunizationCoverageHistogram from "./pages/ImmunizationCoverrage";
 
 export default function Dashboard() {
   return (
@@ -17,7 +18,7 @@ export default function Dashboard() {
       <HealthFacilityComposition />
       <HealthCorrelation />
       <MaternalMortalityChoropleth />
-
+      <ImmunizationCoverageHistogram />
       {/* <Footer /> */}
     </>
   );
