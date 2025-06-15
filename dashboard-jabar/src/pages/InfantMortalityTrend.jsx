@@ -285,8 +285,6 @@ export default function InfantMortalityChart() {
                   ],
                 },
               ]}
-              // Zoom and trend projection are advanced features not natively supported by Nivo's ResponsiveLine
-              // and would require custom implementation (e.g., d3-zoom for zoom, separate library for regression)
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">

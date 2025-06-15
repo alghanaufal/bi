@@ -22,12 +22,12 @@ export default function LifeExpectancy() {
               .map((r) => ({
                 tahun: r.tahun?.trim(),
                 daerah: r.nama_kabupaten_kota?.trim(),
-                ahh: parseFloat(r.angka_harapan_hidup?.trim()),
+                AHH: parseFloat(r.angka_harapan_hidup?.trim()),
                 tipe: r.nama_kabupaten_kota?.toLowerCase().includes("kota")
                   ? "Kota"
                   : "Kabupaten",
               }))
-              .filter((r) => r.tahun && r.daerah && !isNaN(r.ahh));
+              .filter((r) => r.tahun && r.daerah && !isNaN(r.AHH));
 
             const yrs = [...new Set(formatted.map((r) => r.tahun))].sort();
             setYearOptions(yrs);
@@ -40,11 +40,11 @@ export default function LifeExpectancy() {
 
   const filteredAll = data.filter((r) => r.tahun === year);
   const avgAHH =
-    filteredAll.reduce((a, c) => a + c.ahh, 0) / filteredAll.length || 0;
+    filteredAll.reduce((a, c) => a + c.AHH, 0) / filteredAll.length || 0;
 
   const display = filteredAll
     .filter((r) => regionType === "Semua" || r.tipe === regionType)
-    .sort((a, b) => b.ahh - a.ahh)
+    .sort((a, b) => b.AHH - a.AHH)
     .map((r) => ({ ...r, avg: avgAHH }));
 
   return (
@@ -92,7 +92,7 @@ export default function LifeExpectancy() {
         <div style={{ height: 500 }}>
           <ResponsiveBar
             data={display}
-            keys={["ahh"]}
+            keys={["AHH"]}
             indexBy="daerah"
             layout="vertical"
             margin={{ top: 50, right: 130, bottom: 100, left: 200 }}
@@ -100,7 +100,7 @@ export default function LifeExpectancy() {
             valueScale={{ type: "linear" }}
             indexScale={{ type: "band", round: true }}
             colors={({ data }) =>
-              data.ahh >= data.avg ? "#4ade80" : "#f87171"
+              data.AHH >= data.avg ? "#4ade80" : "#f87171"
             }
             axisLeft={{ tickSize: 5, tickPadding: 5, tickRotation: -45 }}
             axisBottom={null}
