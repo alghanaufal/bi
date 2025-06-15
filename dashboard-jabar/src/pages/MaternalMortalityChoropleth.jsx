@@ -201,8 +201,6 @@ export default function MaternalMortalityD3Map() {
 
   // Effect for D3 drawing when data or selectedYear changes
   useEffect(() => {
-    const fixedWidth = 1600;
-    const fixedHeight = 1000;
     if (!geoJsonData || !rawData.length || !selectedYear || !svgRef.current) {
       console.log("Skipping D3 draw: Data not ready.", {
         geoJsonDataLoaded: !!geoJsonData,
@@ -216,8 +214,8 @@ export default function MaternalMortalityD3Map() {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove(); // Clear previous map elements
 
-    const width = fixedWidth;
-    const height = fixedHeight;
+    const width = svg.node().getBoundingClientRect().width;
+    const height = svg.node().getBoundingClientRect().height;
 
     const filteredByYear = rawData.filter((d) => d.tahun === selectedYear);
 
@@ -434,15 +432,10 @@ export default function MaternalMortalityD3Map() {
 
         {/* Map Container: This will now flex-grow to fill available space */}
         <div
-          className="relative rounded-lg overflow-hidden border border-gray-300 shadow-md mx-auto"
-          style={{ width: "1600px", height: "1000px" }} // <--- Ukuran ditetapkan di sini
+          className="relative w-full rounded-lg overflow-hidden border border-gray-300 shadow-md flex-grow" // flex-grow takes remaining height
+          // style={{ height: "800px" }} // Removed fixed height
         >
-          {/* SVG will take w-full and h-full of its fixed-size parent */}
-          <svg
-            ref={svgRef}
-            className="w-full h-full"
-            style={{ width: "1600px", height: "1000px" }}
-          ></svg>
+          <svg ref={svgRef} className="w-full h-full" style={{ height: "600px", width: "800px"}}></svg>
           {/* Tooltip element, controlled by D3 */}
           <div
             ref={tooltipRef}
