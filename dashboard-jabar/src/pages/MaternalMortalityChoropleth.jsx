@@ -273,15 +273,25 @@ export default function MaternalMortalityD3Map() {
         const value = aggregatedData[kotaNameFromGeoJson];
         const displayValue = value !== undefined ? value : "Tidak Tersedia";
 
-        // Show tooltip, displaying original KABKOT property for readability (not uppercase)
-        d3.select(tooltipRef.current)
+        const tooltip = d3.select(tooltipRef.current);
+
+        // Get the bounding rectangle of the SVG container (the parent of the tooltip)
+        const mapContainerRect =
+          svgRef.current.parentElement.getBoundingClientRect();
+
+        // Calculate the adjusted position relative to the map container
+        // We add some offset (e.g., +10px, -28px) for better visual placement
+        const tooltipX = event.clientX - mapContainerRect.left + 10;
+        const tooltipY = event.clientY - mapContainerRect.top - 28; // Adjust based on tooltip height
+
+        tooltip
           .html(
             `<strong>${
               d.properties?.KABKOT || d.id
             }</strong><br/>Tahun: ${selectedYear}<br/>Kematian Ibu: ${displayValue} jiwa`
           )
-          .style("left", event.pageX + 10 + "px")
-          .style("top", event.pageY - 28 + "px")
+          .style("left", tooltipX + "px")
+          .style("top", tooltipY + "px")
           .style("opacity", 1);
 
         // Highlight feature on hover
