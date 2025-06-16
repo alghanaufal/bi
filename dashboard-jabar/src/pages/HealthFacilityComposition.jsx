@@ -14,7 +14,7 @@ export default function HealthFacilityPieChart() {
     setError(null); // Reset error
     fetch(
       "/dinkes-od_15936_jumlah_fasilitas_kesehatan_berdasarkan_jenis_v1_data.csv"
-    ) // Ganti dengan path CSV kamu
+    ) 
       .then((r) => {
         if (!r.ok) {
           throw new Error(`HTTP error! status: ${r.status}`);
@@ -162,11 +162,6 @@ export default function HealthFacilityPieChart() {
                   className="font-inter text-sm" // Apply font and size to tooltip
                 >
                   <strong>{datum.label}</strong>: {datum.value} unit
-                  <br />
-                  {/* Pengecekan untuk datum.percentage sebelum memanggil toFixed */}
-                  {datum.percentage !== undefined && datum.percentage !== null
-                    ? `(${datum.percentage.toFixed(2)}%)`
-                    : '(N/A)'} {/* Tampilkan N/A jika persentase tidak ada */}
                 </div>
               )}
               legends={[
