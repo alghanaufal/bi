@@ -55,26 +55,38 @@ export default function LifeExpectancy() {
             <h2 className="text-2xl font-semibold">
               Perbandingan AHH Jawa Barat – {year}
             </h2>
-            <p className="text-sm text-gray-600">
+            <div className="mt-4 flex flex-wrap gap-2">
               <button
-                className="mr-2 px-3 py-1 border rounded"
+                className={`px-4 py-2 rounded-md transition-colors duration-200 ${
+                  regionType === "Semua"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
                 onClick={() => setRegionType("Semua")}
               >
-                Semua
+                Semua Tipe
               </button>
               <button
-                className="mr-2 px-3 py-1 border rounded"
+                className={`px-4 py-2 rounded-md transition-colors duration-200 ${
+                  regionType === "Kota"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
                 onClick={() => setRegionType("Kota")}
               >
                 Kota
               </button>
               <button
-                className="px-3 py-1 border rounded"
+                className={`px-4 py-2 rounded-md transition-colors duration-200 ${
+                  regionType === "Kabupaten"
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
                 onClick={() => setRegionType("Kabupaten")}
               >
                 Kabupaten
               </button>
-            </p>
+            </div>
           </div>
           <select
             className="border px-3 py-1 rounded"

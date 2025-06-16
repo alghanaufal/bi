@@ -10,7 +10,10 @@ export default function InfantMortalityChart() {
   const [error, setError] = useState(null);
 
   // Define the target years for the chart
-  const years = useMemo(() => ["2018", "2019", "2020", "2021", "2022", "2023"], []);
+  const years = useMemo(
+    () => ["2018", "2019", "2020", "2021", "2022", "2023"],
+    []
+  );
 
   useEffect(() => {
     setIsLoading(true);
@@ -57,7 +60,8 @@ export default function InfantMortalityChart() {
                   r.nama_provinsi === "JAWA BARAT" && // Filter for West Java
                   r.kategori_bayi === "BAYI" && // Only include 'BAYI' category
                   !isNaN(r.jumlah_kematian) && // Ensure jumlah_kematian is a valid number
-                  r.tahun && years.includes(r.tahun) // Filter for relevant years
+                  r.tahun &&
+                  years.includes(r.tahun) // Filter for relevant years
               );
 
             // Get unique city names for the dropdown
@@ -129,7 +133,9 @@ export default function InfantMortalityChart() {
   if (isLoading) {
     return (
       <section className="pt-6 pb-8 px-4 flex items-center justify-center h-screen">
-        <div className="text-xl font-semibold text-gray-700">Memuat data...</div>
+        <div className="text-xl font-semibold text-gray-700">
+          Memuat data...
+        </div>
       </section>
     );
   }
@@ -140,7 +146,9 @@ export default function InfantMortalityChart() {
         <div className="text-red-600 text-lg font-semibold p-4 border border-red-300 bg-red-50 rounded-lg shadow-md text-center">
           <p className="mb-2">Error: {error}</p>
           <p>Mohon periksa konsol browser untuk detail lebih lanjut.</p>
-          <p className="text-sm mt-2">Pastikan file CSV tersedia di root folder aplikasi.</p>
+          <p className="text-sm mt-2">
+            Pastikan file CSV tersedia di root folder aplikasi.
+          </p>
         </div>
       </section>
     );
@@ -151,8 +159,13 @@ export default function InfantMortalityChart() {
     return (
       <section className="pt-6 pb-8 px-4 flex items-center justify-center h-screen">
         <div className="text-gray-600 text-lg p-4 border border-gray-300 bg-gray-50 rounded-lg shadow-md text-center">
-          <p>Tidak ada data kematian bayi yang ditemukan untuk Jawa Barat (2018-2023).</p>
-          <p className="text-sm mt-2">Mohon pastikan data CSV valid dan sesuai kriteria.</p>
+          <p>
+            Tidak ada data kematian bayi yang ditemukan untuk Jawa Barat
+            (2018-2023).
+          </p>
+          <p className="text-sm mt-2">
+            Mohon pastikan data CSV valid dan sesuai kriteria.
+          </p>
         </div>
       </section>
     );
@@ -171,7 +184,10 @@ export default function InfantMortalityChart() {
             </p>
           </div>
           <div className="relative inline-block text-left w-full sm:w-auto">
-            <label htmlFor="kota-select" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="kota-select"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Pilih Kabupaten/Kota:
             </label>
             <div
@@ -189,7 +205,10 @@ export default function InfantMortalityChart() {
                     onChange={() => handleKotaSelection(kota)}
                     className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <label htmlFor={`checkbox-${kota}`} className="ml-2 block text-sm text-gray-900 cursor-pointer">
+                  <label
+                    htmlFor={`checkbox-${kota}`}
+                    className="ml-2 block text-sm text-gray-900 cursor-pointer"
+                  >
                     {kota}
                   </label>
                 </div>
@@ -199,10 +218,10 @@ export default function InfantMortalityChart() {
         </div>
 
         <div style={{ height: 500 }} className="w-full">
-          {chartData[0]?.data.some(d => d.y > 0) ? ( // Check if there's actual data to display
+          {chartData[0]?.data.some((d) => d.y > 0) ? ( // Check if there's actual data to display
             <ResponsiveLine
               data={chartData}
-              margin={{ top: 50, right: 110, bottom: 90, left: 80 }}
+              margin={{ top: 50, right: 200, bottom: 90, left: 80 }}
               xScale={{ type: "point" }}
               yScale={{
                 type: "linear",
@@ -247,14 +266,14 @@ export default function InfantMortalityChart() {
                 <div
                   style={{
                     background: "white",
-                    padding: "10px 14px",
+                    padding: "10px",
                     border: "1px solid #ccc",
                     borderRadius: 6,
                     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                   }}
                   className="font-inter text-sm"
                 >
-                  <strong>{point.serieId}</strong> <br />
+                  <strong>{point.seriesId}</strong> <br />
                   Tahun: <strong>{point.data.xFormatted}</strong> <br />
                   Kematian: <strong>{point.data.yFormatted}</strong> orang
                 </div>
@@ -288,7 +307,8 @@ export default function InfantMortalityChart() {
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-500">
-              Tidak ada data kematian bayi untuk ditampilkan berdasarkan pilihan saat ini.
+              Tidak ada data kematian bayi untuk ditampilkan berdasarkan pilihan
+              saat ini.
             </div>
           )}
         </div>
