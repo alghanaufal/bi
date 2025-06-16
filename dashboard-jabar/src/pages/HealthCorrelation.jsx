@@ -218,11 +218,11 @@ export default function HealthCorrelationScatterPlot() {
           </div>
         </div>
 
-        <div style={{ height: 600 }} className="w-full">
+        <div style={{ height: 800 }} className="w-full">
           {chartData.length > 0 ? (
             <ResponsiveScatterPlot
               data={chartData}
-              margin={{ top: 60, right: 140, bottom: 90, left: 90 }}
+              margin={{ top: 60, right: 200, bottom: 90, left: 90 }}
               xScale={{ type: "linear", min: 0, max: "auto" }} // X-axis for facility count
               yScale={{ type: "linear", min: "auto", max: "auto" }} // Y-axis for life expectancy
               blendMode="multiply" // Good for overlapping points

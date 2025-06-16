@@ -217,7 +217,7 @@ export default function InfantMortalityChart() {
           </div>
         </div>
 
-        <div style={{ height: 500 }} className="w-full">
+        <div style={{ height: 650 }} className="w-full">
           {chartData[0]?.data.some((d) => d.y > 0) ? ( // Check if there's actual data to display
             <ResponsiveLine
               data={chartData}
