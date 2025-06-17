@@ -169,7 +169,7 @@ export default function HealthFacilityPieChart() {
                   anchor: "bottom",
                   direction: "row",
                   translateY: 56,
-                  itemWidth: 100,
+                  itemWidth: 200,
                   itemHeight: 18,
                   itemTextColor: "#999",
                   symbolSize: 18,
