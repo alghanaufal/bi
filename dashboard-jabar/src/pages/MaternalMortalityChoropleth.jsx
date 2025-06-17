@@ -445,7 +445,7 @@ export default function MaternalMortalityD3Map() {
           className="relative w-full rounded-lg overflow-hidden border border-gray-300 shadow-md flex-grow" // flex-grow takes remaining height
           // style={{ height: "800px" }} // Removed fixed height
         >
-          <svg ref={svgRef} className="w-full h-full"></svg>
+          <svg ref={svgRef} className="w-full h-full" style={{ height: "600px", width:"800px" }}></svg>
           {/* Tooltip element, controlled by D3 */}
           <div
             ref={tooltipRef}
